@@ -227,6 +227,8 @@ public class CameraFragment extends Fragment implements ActivityCompat.OnRequest
 
     private boolean usingTextureView = true;
 
+    private int template = CameraDevice.TEMPLATE_PREVIEW;
+
     /**
      * Our custom renderer for this example, which extends {@link PreviewRenderer} and then adds custom
      * shaders, which turns shit green, which is easy.
@@ -335,7 +337,24 @@ public class CameraFragment extends Fragment implements ActivityCompat.OnRequest
                 // If nothing has changed, we ignore this call
                 if(usingTextureView == !isChecked) return;
                 usingTextureView = !isChecked;
-                if(mBackgroundHandler != null) setSurfaceType();
+                if(mBackgroundHandler != null) updateCamera();
+            }
+        });
+
+        ((Switch)view.findViewById(R.id.switch_template_type)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // If nothing has changed, we ignore this call
+                int newTemplate;
+                if(isChecked){
+                    newTemplate = CameraDevice.TEMPLATE_RECORD;
+                } else {
+                    newTemplate = CameraDevice.TEMPLATE_PREVIEW;
+                }
+                if(template != newTemplate){
+                    template = newTemplate;
+                    if(mBackgroundHandler != null) updateCamera();
+                }
             }
         });
 
@@ -472,10 +491,10 @@ public class CameraFragment extends Fragment implements ActivityCompat.OnRequest
     public void onResume() {
         super.onResume();
         startBackgroundThread();
-        setSurfaceType();
+        updateCamera();
     }
 
-    private void setSurfaceType(){
+    private void updateCamera(){
         final ConstraintLayout container = getActivity().findViewById(R.id.fragment_container);
         boolean switchingSurfaces = false;
         if (usingTextureView) {
@@ -796,7 +815,7 @@ public class CameraFragment extends Fragment implements ActivityCompat.OnRequest
             Surface surface = new Surface(texture);
 
             // We set up a CaptureRequest.Builder with the output Surface.
-            mPreviewRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            mPreviewRequestBuilder = mCameraDevice.createCaptureRequest(template);
             mPreviewRequestBuilder.addTarget(surface);
 
             // Here, we create a CameraCaptureSession for camera preview.
